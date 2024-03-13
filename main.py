@@ -1,3 +1,6 @@
+# from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,12 +14,14 @@ from functions import *
 
 max_loading_time = 10  # in seconds
 time_of_interest = "17:15"
-is_for_tomorrow = True
+is_for_tomorrow = False
 time_between_attempts = 5  # in seconds
 max_number_of_attempts = 1000
 
 # Set up Selenium WebDriver
-driver = webdriver.Chrome()  # Or choose the appropriate WebDriver for your browser
+service = Service(executable_path='./chromedriver-win64/chromedriver.exe')
+options = webdriver.ChromeOptions()
+driver = webdriver.Chrome(service=service, options=options)
 
 try:
     # Navigate to the gym's website and log in
