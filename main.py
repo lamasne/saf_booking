@@ -1,4 +1,3 @@
-# from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 
 from selenium.webdriver.common.by import By
@@ -19,7 +18,7 @@ time_between_attempts = 5  # in seconds
 max_number_of_attempts = 1000
 
 # Set up Selenium WebDriver
-service = Service(executable_path='./chromedriver-win64/chromedriver.exe')
+service = Service(executable_path='./chromedriver-linux64/chromedriver.exe')
 options = webdriver.ChromeOptions()
 driver = webdriver.Chrome(service=service, options=options)
 
