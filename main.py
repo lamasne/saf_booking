@@ -1,26 +1,32 @@
 from selenium.webdriver.chrome.service import Service
-
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import WebDriverException, TimeoutException
 import time
 from functions import *
 
 # Left to do: 1) instead of is_tomorrow use date 2) do the cancel 18:30 trick
 
 max_loading_time = 10  # in seconds
-time_of_interest = "17:15"
+time_of_interest = "19:45"
 is_for_tomorrow = False
-time_between_attempts = 5  # in seconds
+time_between_attempts = 3  # in seconds
 max_number_of_attempts = 1000
+username = 'Y7645569S' # mine
+password = 'zse47il-' # mine
+# username = 'Z1515771F' # Luca
+# password = 'Pa!!SAF' # Luca
+# username = x9266767k # Darla
+# password = manuela21. # Darla
 
 # Set up Selenium WebDriver
-service = Service(executable_path='./chromedriver-linux64/chromedriver.exe')
-options = webdriver.ChromeOptions()
-driver = webdriver.Chrome(service=service, options=options)
+# service = Service(executable_path='./chromedriver-linux64/chromedriver.exe')
+# options = webdriver.ChromeOptions()
+# driver = webdriver.Chrome(service=service, options=options)
+driver = webdriver.Chrome()
 
 try:
     # Navigate to the gym's website and log in
@@ -31,12 +37,12 @@ try:
         EC.presence_of_element_located((By.ID, "email"))
     )
     time.sleep(random_delay())
-    username_input.send_keys("Y7645569S")
+    username_input.send_keys(username)
     password_input = driver.find_element(
         "id", "password"
     )  # Locate the password input field
     time.sleep(random_delay())
-    password_input.send_keys("85Isashy85")
+    password_input.send_keys(password)
     time.sleep(random_delay())
     password_input.send_keys(Keys.RETURN)  # Press Enter to submit the form
 
@@ -44,17 +50,22 @@ try:
     time.sleep(random_delay())
     driver.get(
         "https://uab.deporsite.net/reserva-espais?IdDeporte=531"
-    )  # Replace with your gym's website
+    ) 
 
-    # Loop until time of interest becomes available
-    nb_of_attempts = 0
     # Go to tommorow's sessions
     if is_for_tomorrow:
         go_to_next_day(driver, max_loading_time)
+    
+    # Check availability
     availability_found = check_availability(time_of_interest, driver, max_loading_time)
+    
+    # Loop until time of interest becomes available
+    nb_of_attempts = 1
+    start_time = time.time()
     while not availability_found:
         if nb_of_attempts >= max_number_of_attempts:
-            break
+            raise TimeoutException('Reached the max number of attempts.')
+        print(f'Attempt number {nb_of_attempts}')
         driver.refresh()
         # Go to tommorow's sessions
         if is_for_tomorrow:
@@ -64,6 +75,9 @@ try:
         )
         nb_of_attempts += 1
         time.sleep(time_between_attempts)
+    end_time = time.time()
+    spamming_min, spamming_sec = divmod(end_time - start_time, 60) 
+    print(f"Found time availability after {int(spamming_min):} minutes and {int(spamming_sec)} seconds.")
 
     # Confirm the booking (assuming there's a button to confirm the booking)
     confirm_button = WebDriverWait(
@@ -117,10 +131,10 @@ try:
         # )
         time.sleep(random_delay())
         reservar_button[0].click()
-        print(f"You have successfully booked for tomorrow/today at {time_of_interest}")
+        print(f"Congrats! You have successfully booked for tomorrow/today at {time_of_interest}.")
     except Exception as e:
         time.sleep(120)
-        print("CANCEL THE BOOKING! You have 2 minutes")
+        print("Cancel the booking manually! You have 2 minutes")
 
 except Exception as e1:
     print("Error:", e1)
@@ -128,9 +142,9 @@ except Exception as e1:
 # Log out
 time.sleep(5)  # Make sure the booking has been processed
 driver.get("https://uab.deporsite.net/logout")  # Replace with your gym's website
-print("logged out")
+print("Logged out.")
 
 # Close the browser
 time.sleep(3)  # Make sure I have been logged out
 driver.quit()
-print("closed the window")
+print("Closed the window.")

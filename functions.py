@@ -25,9 +25,10 @@ def check_availability(time_string, driver, max_loading_time):
             time.sleep(0.2)
             try:
                 session.click()  # Click on the session
+                print("Time is available")
                 return True
             except Exception as e:
-                print("Not available")
+                print("Time is currently not available")
                 return False
 
 
