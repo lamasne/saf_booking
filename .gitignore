@@ -1,0 +1,11 @@
+# Ignore compiled files
+*.class
+*.pyc
+*.o
+*.out
+
+# Ignore env file
+.env
+
+# Ignore log files
+*.log

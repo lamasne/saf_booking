@@ -4,7 +4,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-
 def random_delay():
     """
     Generates a random delay between 1 and 3 seconds to mimic human behavior.

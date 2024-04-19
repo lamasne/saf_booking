@@ -1,150 +1,46 @@
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import WebDriverException, TimeoutException
-import time
 from functions import *
+from run import run
+# from params import CREDS
+from dotenv import load_dotenv
+import os
+import ast
+import time
+from datetime import datetime, timedelta
+import random
 
-# Left to do: 1) instead of is_tomorrow use date 2) do the cancel 18:30 trick
-
-max_loading_time = 10  # in seconds
-time_of_interest = "19:45"
+users = ['Neil'] # order counts
+time_of_interest = "17:15"
+# time_of_interest = "18:30"
 is_for_tomorrow = False
-time_between_attempts = 3  # in seconds
+
+CREDS = ast.literal_eval(os.getenv('CREDS'))
+max_loading_time = 10  # in seconds
 max_number_of_attempts = 1000
-username = 'Y7645569S' # mine
-password = 'zse47il-' # mine
-# username = 'Z1515771F' # Luca
-# password = 'Pa!!SAF' # Luca
-# username = x9266767k # Darla
-# password = manuela21. # Darla
+time_between_attempts = 1 # in seconds
 
-# Set up Selenium WebDriver
-# service = Service(executable_path='./chromedriver-linux64/chromedriver.exe')
-# options = webdriver.ChromeOptions()
-# driver = webdriver.Chrome(service=service, options=options)
-driver = webdriver.Chrome()
+time_between_attempts += random.uniform(0, 0.5) # for bot detection
 
-try:
-    # Navigate to the gym's website and log in
-    driver.get("https://uab.deporsite.net/loginmenu")
-    username_input = WebDriverWait(
-        driver, max_loading_time
-    ).until(  # Wait for the element to appear
-        EC.presence_of_element_located((By.ID, "email"))
-    )
-    time.sleep(random_delay())
-    username_input.send_keys(username)
-    password_input = driver.find_element(
-        "id", "password"
-    )  # Locate the password input field
-    time.sleep(random_delay())
-    password_input.send_keys(password)
-    time.sleep(random_delay())
-    password_input.send_keys(Keys.RETURN)  # Press Enter to submit the form
+for user in users:
+    if user in CREDS.keys():
+        username, password = CREDS[user]
+    else:
+        raise ValueError(f"Credentials of user: {user} are unknown")
+    run(max_loading_time, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts)
 
-    # Navigate to the booking page
-    time.sleep(random_delay())
-    driver.get(
-        "https://uab.deporsite.net/reserva-espais?IdDeporte=531"
-    ) 
+# Prepare the booking of the next session
+booked_session = datetime.combine(datetime.now().date(), datetime.strptime(time_of_interest, "%H:%M").time())
+next_session = booked_session + timedelta(minutes=75)
+# Wait for the booked session to start to be able to book the next session
+delay = round((booked_session - datetime.now()).total_seconds())
+if delay > 0:
+    print(f"Will now sleep for {timedelta(seconds=delay)} to be able to book the next session: {next_session.time()}")
+    time.sleep(delay)
 
-    # Go to tommorow's sessions
-    if is_for_tomorrow:
-        go_to_next_day(driver, max_loading_time)
-    
-    # Check availability
-    availability_found = check_availability(time_of_interest, driver, max_loading_time)
-    
-    # Loop until time of interest becomes available
-    nb_of_attempts = 1
-    start_time = time.time()
-    while not availability_found:
-        if nb_of_attempts >= max_number_of_attempts:
-            raise TimeoutException('Reached the max number of attempts.')
-        print(f'Attempt number {nb_of_attempts}')
-        driver.refresh()
-        # Go to tommorow's sessions
-        if is_for_tomorrow:
-            go_to_next_day(driver, max_loading_time)
-        availability_found = check_availability(
-            time_of_interest, driver, max_loading_time
-        )
-        nb_of_attempts += 1
-        time.sleep(time_between_attempts)
-    end_time = time.time()
-    spamming_min, spamming_sec = divmod(end_time - start_time, 60) 
-    print(f"Found time availability after {int(spamming_min):} minutes and {int(spamming_sec)} seconds.")
-
-    # Confirm the booking (assuming there's a button to confirm the booking)
-    confirm_button = WebDriverWait(
-        driver, max_loading_time
-    ).until(  # Wait for the element to be present
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "btn-modal-horas"))
-    )
-    time.sleep(random_delay())
-    confirm_button[0].click()
-
-    try:
-        # Wait for agreement checkbox to be clickable
-        agree_terms_check = WebDriverWait(
-            driver, max_loading_time
-        ).until(  # Wait for the element to be present
-            EC.presence_of_element_located((By.ID, "aceptacionCondiciones"))
-        )
-        # Scroll down to the checkbox
-        time.sleep(random_delay())
-        driver.execute_script("arguments[0].scrollIntoView();", agree_terms_check)
-
-        # Check the checkbox
-        time.sleep(random_delay())
-        agree_terms_check.click()
-
-        # Click on continue
-        continue_button = WebDriverWait(
-            driver, max_loading_time
-        ).until(  # Wait for the element to be present
-            EC.element_to_be_clickable((By.ID, "btnSiguiente"))
-        )
-        time.sleep(random_delay())
-        continue_button.click()
-
-        # Click on next continue
-        reservar_button = WebDriverWait(
-            driver, max_loading_time
-        ).until(  # Wait for the element to be present
-            EC.presence_of_all_elements_located(
-                (
-                    By.CSS_SELECTOR,
-                    "div.col-md-3:not(.hidden) .btn-siguiente-pagar:not(.hidden)",
-                )
-            )
-        )
-
-        # reservar_button = WebDriverWait(
-        #     driver, max_loading_time
-        # ).until(  # Wait for the element to be present
-        #     EC.element_to_be_clickable((By.CLASS_NAME, "btn-siguiente-pagar"))
-        # )
-        time.sleep(random_delay())
-        reservar_button[0].click()
-        print(f"Congrats! You have successfully booked for tomorrow/today at {time_of_interest}.")
-    except Exception as e:
-        time.sleep(120)
-        print("Cancel the booking manually! You have 2 minutes")
-
-except Exception as e1:
-    print("Error:", e1)
-
-# Log out
-time.sleep(5)  # Make sure the booking has been processed
-driver.get("https://uab.deporsite.net/logout")  # Replace with your gym's website
-print("Logged out.")
-
-# Close the browser
-time.sleep(3)  # Make sure I have been logged out
-driver.quit()
-print("Closed the window.")
+# Perform the actual booking of the next session for each user
+time_of_interest_2 = "{:02d}".format(next_session.hour) + ":" + "{:02d}".format(next_session.minute)
+for user in users:
+    if user in CREDS.keys():
+        username, password = CREDS[user]
+    else:
+        raise ValueError(f"Credentials of user: {user} are unknown")
+    run(max_loading_time, username, password, is_for_tomorrow, time_of_interest_2, max_number_of_attempts, time_between_attempts)
