@@ -3,6 +3,7 @@
 *.pyc
 *.o
 *.out
+__pycache__/
 
 # Ignore env file
 .env

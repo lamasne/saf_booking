@@ -8,24 +8,22 @@ import time
 from datetime import datetime, timedelta
 import random
 
-users = ['Neil'] # order counts
-time_of_interest = "17:15"
-# time_of_interest = "18:30"
+users = ['Neil', 'Irfan'] # order counts
+# time_of_interest = "17:15"
+time_of_interest = "16:00"
 is_for_tomorrow = False
 
 CREDS = ast.literal_eval(os.getenv('CREDS'))
 max_loading_time = 10  # in seconds
 max_number_of_attempts = 1000
-time_between_attempts = 1 # in seconds
-
-time_between_attempts += random.uniform(0, 0.5) # for bot detection
+time_between_attempts = [2,4]
 
 for user in users:
     if user in CREDS.keys():
         username, password = CREDS[user]
     else:
         raise ValueError(f"Credentials of user: {user} are unknown")
-    run(max_loading_time, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts)
+    run(max_loading_time, user, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts)
 
 # Prepare the booking of the next session
 booked_session = datetime.combine(datetime.now().date(), datetime.strptime(time_of_interest, "%H:%M").time())
@@ -43,4 +41,4 @@ for user in users:
         username, password = CREDS[user]
     else:
         raise ValueError(f"Credentials of user: {user} are unknown")
-    run(max_loading_time, username, password, is_for_tomorrow, time_of_interest_2, max_number_of_attempts, time_between_attempts)
+    run(max_loading_time, user, username, password, is_for_tomorrow, time_of_interest_2, max_number_of_attempts, time_between_attempts)

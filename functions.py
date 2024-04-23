@@ -4,15 +4,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-def random_delay():
+def random_delay(t1 = 0.7, t2=1.5):
     """
-    Generates a random delay between 1 and 3 seconds to mimic human behavior.
+    Generates a random delay between t1 and t2 seconds to mimic human behavior.
     """
-    return random.uniform(1, 2)
+    return random.uniform(t1, t2)
 
 
-def check_availability(time_string, driver, max_loading_time):
-    time.sleep(3)  # Gives time for the right schedule to show
+def check_availability(time_string, driver, max_loading_time, fast_click = [0.1,0.2]):
     # Find the available sessions for today
     available_sessions = WebDriverWait(
         driver, max_loading_time
@@ -21,7 +20,7 @@ def check_availability(time_string, driver, max_loading_time):
     )
     for session in available_sessions:
         if time_string in session.text:  # Check if the session is at 17:15
-            time.sleep(0.2)
+            time.sleep(random_delay(*fast_click))
             try:
                 session.click()  # Click on the session
                 print("Time is available")

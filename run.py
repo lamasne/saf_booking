@@ -8,9 +8,9 @@ from selenium.common.exceptions import WebDriverException, TimeoutException
 import time
 from functions import *
 
-def run(max_loading_time, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts):
+def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts):
     
-    print(f"I will now book a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {username}")
+    print(f"I will now book a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {user}")
 
     driver = webdriver.Chrome()
     try:
@@ -59,7 +59,8 @@ def run(max_loading_time, username, password, is_for_tomorrow, time_of_interest,
                 time_of_interest, driver, max_loading_time
             )
             nb_of_attempts += 1
-            time.sleep(time_between_attempts)
+            # wait between attempts 
+            time.sleep(random_delay(*time_between_attempts))  
         end_time = time.time()
         spamming_min, spamming_sec = divmod(end_time - start_time, 60) 
         print(f"Found time availability after {int(spamming_min):} minutes and {int(spamming_sec)} seconds.")
@@ -116,7 +117,7 @@ def run(max_loading_time, username, password, is_for_tomorrow, time_of_interest,
             # )
             time.sleep(random_delay())
             reservar_button[0].click()
-            print(f"Congrats! You have successfully booked a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {username}")
+            print(f"Congrats! You have successfully booked a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {user}")
         except Exception as e:
             print(e)
             if nb_of_attempts < max_number_of_attempts:
