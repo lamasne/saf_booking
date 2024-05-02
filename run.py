@@ -146,7 +146,7 @@ def book_session(user, username, password, is_for_tomorrow, time_of_interest):
             if nb_of_attempts < config.max_number_of_attempts:
                 print("Error! I will try again in 2 min")
                 time.sleep(120)
-                run(config.max_loading_time, username, password, is_for_tomorrow, time_of_interest, config.max_number_of_attempts, config.time_between_attempts)
+                book_session(config.max_loading_time, username, password, is_for_tomorrow, time_of_interest, config.max_number_of_attempts, config.time_between_attempts)
 
     except Exception as e1:
         print("Error:", e1)
