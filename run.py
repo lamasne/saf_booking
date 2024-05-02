@@ -7,9 +7,32 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException, TimeoutException
 import time
 from functions import *
+import config
 
-def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts):
-    
+
+def book_consec_sessions(users, time_of_interest, is_for_tomorrow):
+    '''Books consecutive sessions for all users'''
+    session_time = datetime.combine(datetime.now().date(), datetime.strptime(time_of_interest, "%H:%M").time())
+    nb_sessions_booked = 0
+    while nb_sessions_booked < config.nb_consecutive_sessions_to_book:
+        if nb_sessions_booked > 0:
+            wait_for_booking_enabling(session_time)
+        book_for_all(users, time_of_interest, is_for_tomorrow)
+        nb_sessions_booked += 1
+        # Define next session to book
+        session_time = session_time + timedelta(minutes=75)
+        time_of_interest = "{:02d}".format(session_time.hour) + ":" + "{:02d}".format(session_time.minute)
+
+def book_for_all(users, time_of_interest, is_for_tomorrow):
+    '''books session for each user'''
+    for user in users:
+        if user in config.CREDS.keys():
+            username, password = config.CREDS[user]
+        else:
+            raise ValueError(f"Credentials of user: {user} are unknown")
+        book_session(user, username, password, is_for_tomorrow, time_of_interest)
+
+def book_session(user, username, password, is_for_tomorrow, time_of_interest):
     print(f"I will now book a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {user}")
 
     driver = webdriver.Chrome()
@@ -17,7 +40,7 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
         # Navigate to the gym's website and log in
         driver.get("https://uab.deporsite.net/loginmenu")
         username_input = WebDriverWait(
-            driver, max_loading_time
+            driver, config.max_loading_time
         ).until(  # Wait for the element to appear
             EC.presence_of_element_located((By.ID, "email"))
         )
@@ -39,28 +62,28 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
 
         # Go to tommorow's sessions
         if is_for_tomorrow:
-            go_to_next_day(driver, max_loading_time)
+            go_to_next_day(driver, config.max_loading_time)
         
         # Check availability
-        availability_found = check_availability(time_of_interest, driver, max_loading_time)
+        availability_found = check_availability(time_of_interest, driver, config.max_loading_time)
         
         # Loop until time of interest becomes available
         nb_of_attempts = 1
         start_time = time.time()
         while not availability_found:
-            if nb_of_attempts >= max_number_of_attempts:
+            if nb_of_attempts >= config.max_number_of_attempts:
                 raise TimeoutException('Reached the max number of attempts.')
             print(f'Attempt number {nb_of_attempts}')
             driver.refresh()
             # Go to tommorow's sessions
             if is_for_tomorrow:
-                go_to_next_day(driver, max_loading_time)
+                go_to_next_day(driver, config.max_loading_time)
             availability_found = check_availability(
-                time_of_interest, driver, max_loading_time
+                time_of_interest, driver, config.max_loading_time
             )
             nb_of_attempts += 1
             # wait between attempts 
-            time.sleep(random_delay(*time_between_attempts))  
+            time.sleep(random_delay(*config.time_between_attempts))  
         end_time = time.time()
         spamming_min, spamming_sec = divmod(end_time - start_time, 60) 
         print(f"Found time availability after {int(spamming_min):} minutes and {int(spamming_sec)} seconds.")
@@ -68,7 +91,7 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
         try:
             # Confirm the booking (assuming there's a button to confirm the booking)
             confirm_button = WebDriverWait(
-                driver, max_loading_time
+                driver, config.max_loading_time
             ).until(  # Wait for the element to be present
                 EC.presence_of_all_elements_located((By.CLASS_NAME, "btn-modal-horas"))
             )
@@ -77,7 +100,7 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
 
             # Wait for agreement checkbox to be clickable
             agree_terms_check = WebDriverWait(
-                driver, max_loading_time
+                driver, config.max_loading_time
             ).until(  # Wait for the element to be present
                 EC.presence_of_element_located((By.ID, "aceptacionCondiciones"))
             )
@@ -91,7 +114,7 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
 
             # Click on continue
             continue_button = WebDriverWait(
-                driver, max_loading_time
+                driver, config.max_loading_time
             ).until(  # Wait for the element to be present
                 EC.element_to_be_clickable((By.ID, "btnSiguiente"))
             )
@@ -100,7 +123,7 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
 
             # Click on next continue
             reservar_button = WebDriverWait(
-                driver, max_loading_time
+                driver, config.max_loading_time
             ).until(  # Wait for the element to be present
                 EC.presence_of_all_elements_located(
                     (
@@ -111,7 +134,7 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
             )
 
             # reservar_button = WebDriverWait(
-            #     driver, max_loading_time
+            #     driver, config.max_loading_time
             # ).until(  # Wait for the element to be present
             #     EC.element_to_be_clickable((By.CLASS_NAME, "btn-siguiente-pagar"))
             # )
@@ -120,10 +143,10 @@ def run(max_loading_time, user, username, password, is_for_tomorrow, time_of_int
             print(f"Congrats! You have successfully booked a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {user}")
         except Exception as e:
             print(e)
-            if nb_of_attempts < max_number_of_attempts:
+            if nb_of_attempts < config.max_number_of_attempts:
                 print("Error! I will try again in 2 min")
                 time.sleep(120)
-                run(max_loading_time, username, password, is_for_tomorrow, time_of_interest, max_number_of_attempts, time_between_attempts)
+                run(config.max_loading_time, username, password, is_for_tomorrow, time_of_interest, config.max_number_of_attempts, config.time_between_attempts)
 
     except Exception as e1:
         print("Error:", e1)

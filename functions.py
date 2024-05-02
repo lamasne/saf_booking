@@ -3,11 +3,18 @@ import random
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from datetime import datetime, timedelta
+
+
+def wait_for_booking_enabling(session_time):
+    booking_enabled_time = session_time - timedelta(minutes=75)
+    delay = round((booking_enabled_time - datetime.now()).total_seconds())
+    if delay > 0:
+        print(f"Will now sleep for {timedelta(seconds=delay)} (until {booking_enabled_time.time()}) to be able to book the session: {session_time.time()}")
+        time.sleep(delay)
 
 def random_delay(t1 = 0.7, t2=1.5):
-    """
-    Generates a random delay between t1 and t2 seconds to mimic human behavior.
-    """
+    """Generates a random delay between t1 and t2 seconds to mimic human behavior."""
     return random.uniform(t1, t2)
 
 
