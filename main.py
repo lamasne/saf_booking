@@ -1,7 +1,8 @@
 from run import book_consec_sessions
 
 # Inputs
-users = ['Neil', 'Luca'] # order counts
+# users = ['Luca', 'Emma', 'Neil'] # order counts
+users = ['Aish']
 time_of_interest = "18:30"
 is_for_tomorrow = False
 

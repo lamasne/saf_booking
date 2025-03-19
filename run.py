@@ -15,8 +15,8 @@ def book_consec_sessions(users, time_of_interest, is_for_tomorrow):
     session_time = datetime.combine(datetime.now().date(), datetime.strptime(time_of_interest, "%H:%M").time())
     nb_sessions_booked = 0
     while nb_sessions_booked < config.nb_consecutive_sessions_to_book:
-        if nb_sessions_booked > 0:
-            wait_for_booking_enabling(session_time)
+        # if nb_sessions_booked > 0:
+        wait_for_booking_enabling(session_time)
         book_for_all(users, time_of_interest, is_for_tomorrow)
         nb_sessions_booked += 1
         # Define next session to book
@@ -35,7 +35,11 @@ def book_for_all(users, time_of_interest, is_for_tomorrow):
 def book_session(user, username, password, is_for_tomorrow, time_of_interest):
     print(f"I will now book a gym session at {time_of_interest} {' tomorrow' if is_for_tomorrow else 'today'} for {user}")
 
-    driver = webdriver.Chrome()
+    # driver = webdriver.Chrome()
+    options = webdriver.ChromeOptions()
+    options.add_argument("--disable-search-engine-choice-screen")
+    driver = webdriver.Chrome(options=options)
+
     try:
         # Navigate to the gym's website and log in
         driver.get("https://uab.deporsite.net/loginmenu")
@@ -146,8 +150,7 @@ def book_session(user, username, password, is_for_tomorrow, time_of_interest):
             if nb_of_attempts < config.max_number_of_attempts:
                 print("Error! I will try again in 2 min")
                 time.sleep(120)
-                book_session(config.max_loading_time, username, password, is_for_tomorrow, time_of_interest, config.max_number_of_attempts, config.time_between_attempts)
-
+                book_session(user, username, password, is_for_tomorrow, time_of_interest)
     except Exception as e1:
         print("Error:", e1)
 
